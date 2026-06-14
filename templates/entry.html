@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome — Vignan's CampusPulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080d18;
+      --card:     #0f1624;
+      --border:   #1a2540;
+      --accent:   #38bdf8;
+      --purple:   #a78bfa;
+      --yellow:   #fbbf24;
+      --green:    #34d399;
+      --text:     #f0f6ff;
+      --muted:    #475569;
+      --sub:      #94a3b8;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    /* ── Animated background ── */
+    .bg-orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; z-index: 0;
+    }
+    .bg-orb-1 {
+      width: 500px; height: 500px;
+      background: rgba(56,189,248,0.06);
+      top: -100px; left: -100px;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .bg-orb-2 {
+      width: 400px; height: 400px;
+      background: rgba(167,139,250,0.06);
+      bottom: -80px; right: -80px;
+      animation: drift 15s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes drift {
+      from { transform: translate(0,0); }
+      to   { transform: translate(40px, 30px); }
+    }
+
+    /* ── Grid lines ── */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── Flash ── */
+    .flash-wrap {
+      position: fixed; top: 20px; right: 20px; z-index: 999;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .flash {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; border-radius: 10px; font-size: 14px;
+      backdrop-filter: blur(8px);
+    }
+    .flash-success { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); color: #34d399; }
+    .flash-error   { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); color: #f87171; }
+    .flash-close   { background: none; border: none; cursor: pointer; color: inherit; margin-left: auto; font-size: 16px; }
+
+    /* ── Main container ── */
+    .gate {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 460px;
+      padding: 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Logo ── */
+    .gate-logo {
+      text-align: center; margin-bottom: 32px;
+    }
+    .gate-logo-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(167,139,250,0.2));
+      border: 1px solid rgba(56,189,248,0.25);
+      font-size: 26px; margin-bottom: 14px;
+    }
+    .gate-logo-name {
+      font-family: "Syne", sans-serif;
+      font-size: 26px; font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .gate-logo-name span { color: var(--accent); }
+    .gate-tagline {
+      font-size: 12px; color: var(--muted);
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    /* ── Card ── */
+    .gate-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    }
+
+    /* ── Toggle pill ── */
+    .gate-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .gate-toggle-btn {
+      flex: 1; padding: 10px 0;
+      background: none; border: none; cursor: pointer;
+      font-family: "DM Sans", sans-serif;
+      font-size: 14px; font-weight: 600;
+      color: var(--sub);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: color 0.25s;
+      position: relative; z-index: 1;
+    }
+    .gate-toggle-btn.active { color: var(--text); }
+    .gate-toggle-slider {
+      position: absolute;
+      top: 4px; bottom: 4px;
+      border-radius: 10px;
+      transition: left 0.3s cubic-bezier(.4,0,.2,1), width 0.3s;
+      z-index: 0;
+    }
+    /* slider color set by JS */
+
+    /* ── Panel ── */
+    .gate-panel { display: none; }
+    .gate-panel.active { display: block; }
+
+    .panel-header { margin-bottom: 24px; }
+    .panel-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 14px;
+    }
+    .panel-icon--student {
+      background: rgba(56,189,248,0.12);
+      border: 1px solid rgba(56,189,248,0.25);
+      color: var(--accent);
+    }
+    .panel-icon--admin {
+      background: rgba(251,191,36,0.12);
+      border: 1px solid rgba(251,191,36,0.25);
+      color: var(--yellow);
+    }
+    .panel-title {
+      font-family: "Syne", sans-serif;
+      font-size: 22px; font-weight: 800; margin-bottom: 4px;
+    }
+    .panel-sub { font-size: 13px; color: var(--sub); line-height: 1.5; }
+
+    /* ── Form ── */
+    .gate-field { margin-bottom: 16px; }
+    .gate-field label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--sub); letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .gate-field input {
+      width: 100%; padding: 11px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text); font-family: "DM Sans", sans-serif; font-size: 14px;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .gate-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+    }
+    .gate-field.admin-field input:focus {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(251,191,36,0.1);
+    }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 42px; }
+    .pw-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 16px; padding: 2px;
+    }
+    .pw-toggle:hover { color: var(--sub); }
+
+    /* ── Submit btn ── */
+    .gate-submit {
+      width: 100%; padding: 13px;
+      border: none; border-radius: 11px;
+      font-family: "DM Sans", sans-serif; font-size: 15px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .gate-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .gate-submit:active { transform: translateY(0); }
+    .gate-submit--student {
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      color: #000;
+    }
+    .gate-submit--admin {
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+      color: #000;
+    }
+
+    /* ── Divider + register link ── */
+    .gate-divider {
+      text-align: center; margin: 18px 0 14px;
+      position: relative; color: var(--muted); font-size: 12px;
+    }
+    .gate-divider::before, .gate-divider::after {
+      content: ""; position: absolute; top: 50%; height: 1px;
+      width: 38%; background: var(--border);
+    }
+    .gate-divider::before { left: 0; }
+    .gate-divider::after  { right: 0; }
+
+    .gate-register {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 11px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      color: var(--sub); font-size: 14px; font-weight: 500;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .gate-register:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(56,189,248,0.05);
+    }
+
+    /* ── Footer note ── */
+    .gate-footnote {
+      text-align: center; margin-top: 20px;
+      font-size: 12px; color: var(--muted);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <!-- Flash messages -->
+  {% with flashed = get_flashed_messages(with_categories=true) %}
+    {% if flashed %}
+    <div class="flash-wrap">
+      {% for cat, msg in flashed %}
+      <div class="flash flash-{{ cat }}">
+        <i class="ph ph-{{ 'check-circle' if cat == 'success' else 'warning-circle' }}"></i>
+        {{ msg }}
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="gate">
+
+    <!-- Logo -->
+    <div class="gate-logo">
+      <div class="gate-logo-mark">⚡</div>
+      <div class="gate-logo-name">Vignan's Campus<span>Pulse</span></div>
+      <div class="gate-tagline">Campus Issue Reporting &amp; Tracking Platform</div>
+    </div>
+
+    <!-- Card -->
+    <div class="gate-card">
+
+      <!-- Toggle pill -->
+      <div class="gate-toggle" id="gateToggle">
+        <div class="gate-toggle-slider" id="toggleSlider"></div>
+        <button class="gate-toggle-btn active" id="btnStudent" onclick="switchPanel('student')">
+          <i class="ph ph-graduation-cap"></i> Student Portal
+        </button>
+        <button class="gate-toggle-btn" id="btnAdmin" onclick="switchPanel('admin')">
+          <i class="ph ph-shield-check"></i> Admin Panel
+        </button>
+      </div>
+
+      <!-- Student Panel -->
+      <div class="gate-panel active" id="panelStudent">
+        <div class="panel-header">
+          <div class="panel-icon panel-icon--student">
+            <i class="ph ph-graduation-cap"></i>
+          </div>
+          <div class="panel-title">Student Login</div>
+          <div class="panel-sub">Log in with your university Registration ID to report issues and earn points.</div>
+        </div>
+
+        <form method="POST" action="{{ url_for('student_login') }}">
+          <div class="gate-field">
+            <label>Registration ID</label>
+            <input type="text" name="regd_id" placeholder="e.g. 22FA1B0001"
+                   style="text-transform:uppercase" autocomplete="username" required />
+          </div>
+          <div class="gate-field">
+            <label>Password</label>
+            <div class="pw-wrap">
+              <input type="password" name="password" id="sPw" placeholder="Your password"
+                     autocomplete="current-password" required />
+              <button type="button" class="pw-toggle" onclick="togglePw('sPw','sEye')">
+                <i class="ph ph-eye" id="sEye"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="gate-submit gate-submit--student">
+            <i class="ph ph-sign-in"></i> Enter as Student
+          </button>
+        </form>
+
+        <div class="gate-divider">New student?</div>
+        <a href="{{ url_for('register') }}" class="gate-register">
+          <i class="ph ph-user-plus"></i> Create an Account
+        </a>
+      </div>
+
+      <!-- Admin Panel -->
+      <div class="gate-panel" id="panelAdmin">
+        <div class="panel-header">
+          <div class="panel-icon panel-icon--admin">
+            <i class="ph ph-shield-check"></i>
+          </div>
+          <div class="panel-title">Admin Login</div>
+          <div class="panel-sub">Access the admin dashboard to manage complaints, view analytics and update statuses.</div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_login') }}">
+          <div class="gate-field admin-field">
+            <label>Admin Username</label>
+            <input type="text" name="username" placeholder="Enter admin username"
+                   autocomplete="username" required />
+          </div>
+          <div class="gate-field admin-field">
+            <label>Password</label>
+            <div class="pw-wrap">
+              <input type="password" name="password" id="aPw" placeholder="Admin password"
+                     autocomplete="current-password" required />
+              <button type="button" class="pw-toggle" onclick="togglePw('aPw','aEye')">
+                <i class="ph ph-eye" id="aEye"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="gate-submit gate-submit--admin">
+            <i class="ph ph-shield-check"></i> Enter as Admin
+          </button>
+        </form>
+      </div>
+
+    </div><!-- /gate-card -->
+
+    <p class="gate-footnote">
+      <i class="ph ph-lock-simple"></i>
+      Student identities are never revealed to admins.
+    </p>
+
+  </main>
+
+  <script>
+    const panels  = { student: "panelStudent", admin: "panelAdmin" };
+    const btns    = { student: "btnStudent",   admin: "btnAdmin"   };
+    const slider  = document.getElementById("toggleSlider");
+    const toggle  = document.getElementById("gateToggle");
+    let   current = "student";
+
+    function positionSlider(panel) {
+      const btn = document.getElementById(btns[panel]);
+      const tRect = toggle.getBoundingClientRect();
+      const bRect = btn.getBoundingClientRect();
+      slider.style.left   = (bRect.left - tRect.left - 4) + "px";
+      slider.style.width  = bRect.width + "px";
+      slider.style.background = panel === "student"
+        ? "linear-gradient(135deg,rgba(56,189,248,0.18),rgba(56,189,248,0.08))"
+        : "linear-gradient(135deg,rgba(251,191,36,0.18),rgba(251,191,36,0.08))";
+      slider.style.border = panel === "student"
+        ? "1px solid rgba(56,189,248,0.3)"
+        : "1px solid rgba(251,191,36,0.3)";
+    }
+
+    function switchPanel(panel) {
+      if (panel === current) return;
+      current = panel;
+
+      // Swap panels with fade
+      Object.keys(panels).forEach(k => {
+        const el = document.getElementById(panels[k]);
+        el.classList.remove("active");
+      });
+      document.getElementById(panels[panel]).classList.add("active");
+
+      // Swap button active state
+      Object.keys(btns).forEach(k => {
+        document.getElementById(btns[k]).classList.toggle("active", k === panel);
+      });
+
+      positionSlider(panel);
+    }
+
+    function togglePw(inputId, iconId) {
+      const f = document.getElementById(inputId);
+      const i = document.getElementById(iconId);
+      f.type = f.type === "password" ? "text" : "password";
+      i.className = f.type === "password" ? "ph ph-eye" : "ph ph-eye-slash";
+    }
+
+    // Initial slider position after fonts load
+    window.addEventListener("load", () => positionSlider("student"));
+    window.addEventListener("resize", () => positionSlider(current));
+  </script>
+</body>
+</html>

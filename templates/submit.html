@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Report an Issue — Vignan's CampusPulse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <a href="{{ url_for('dashboard') }}" class="back-link">
+      <i class="ph ph-arrow-left"></i> Back to Home
+    </a>
+    <h1><i class="ph ph-megaphone"></i> Report an Issue</h1>
+    <p>Help improve your campus by reporting problems clearly and concisely.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container form-container">
+
+    <!-- Tips sidebar -->
+    <aside class="form-tips">
+      <h3><i class="ph ph-lightbulb"></i> Tips for a Good Report</h3>
+      <ul>
+        <li><i class="ph ph-check"></i> Select a block — it's required</li>
+        <li><i class="ph ph-check"></i> Describe the exact spot (floor, room, etc.)</li>
+        <li><i class="ph ph-check"></i> Attach a photo if possible</li>
+        <li><i class="ph ph-check"></i> Choose the most relevant category</li>
+        <li><i class="ph ph-check"></i> Keep it factual, not emotional</li>
+      </ul>
+      <div class="tips-points">
+        <i class="ph ph-star"></i>
+        <span>Earn <strong>+10 points</strong> for every valid complaint submitted!</span>
+      </div>
+    </aside>
+
+    <!-- Submission Form -->
+    <form class="complaint-form" action="{{ url_for('submit') }}" method="POST"
+          enctype="multipart/form-data" id="complaintForm">
+
+      <!-- Issue Title -->
+      <div class="form-group">
+        <label for="title">Issue Title <span class="required">*</span></label>
+        <input type="text" id="title" name="title" required
+               placeholder="e.g. Broken water cooler in Block C"
+               maxlength="100" />
+        <span class="char-count" id="titleCount">0 / 100</span>
+      </div>
+
+      <!-- Category + Location side by side -->
+      <div class="form-row-2">
+        <div class="form-group">
+          <label for="category">Category <span class="required">*</span></label>
+          <div class="select-wrapper">
+            <select id="category" name="category" required>
+              <option value="">— Select category —</option>
+              <option value="Infrastructure">🏗️ Infrastructure</option>
+              <option value="Technology">💻 Technology</option>
+              <option value="Hygiene">🚿 Hygiene</option>
+              <option value="Academic">📚 Academic</option>
+              <option value="Safety">🛡️ Safety</option>
+              <option value="Transport">🚌 Transport</option>
+              <option value="Other">📌 Other</option>
+            </select>
+            <i class="ph ph-caret-down select-arrow"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Describe the Location <span class="required">*</span></label>
+          <input type="text" id="location" name="location" required
+                 placeholder="e.g. 2nd floor, near the restrooms"
+                 maxlength="150" />
+          <span class="field-hint">Add specific details like floor, room number, or nearby landmark.</span>
+        </div>
+      </div>
+
+      <!-- Block picker — mandatory -->
+      <div class="form-group">
+        <label>Select Block <span class="required">*</span>
+          <span style="color:var(--text-muted); font-weight:400;"> — required</span>
+        </label>
+        <input type="hidden" id="blockValue" name="block" value="" />
+        <div class="block-picker" id="blockPicker">
+          {% set blocks = [
+            ('A-Block','ph-buildings'),
+            ('H-Block','ph-buildings'),
+            ('P-Block','ph-buildings'),
+            ('N-Block','ph-buildings'),
+            ('U-Block','ph-buildings'),
+            ('Library','ph-books'),
+            ('Boys Hostel', 'ph-house'),
+            ('Girls Hostel', 'ph-house-line'),
+          ] %}
+          {% for block, icon in blocks %}
+          <button type="button" class="block-btn" data-value="{{ block }}">
+            <i class="ph {{ icon }}"></i>
+            <span>{{ block }}</span>
+          </button>
+          {% endfor %}
+        </div>
+        <span class="block-error" id="blockError" style="display:none; color:var(--danger,#e74c3c); font-size:0.85rem; margin-top:0.4rem;">
+          <i class="ph ph-warning"></i> Please select a block before submitting.
+        </span>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="description">Description <span class="required">*</span></label>
+        <textarea id="description" name="description" required rows="5"
+                  placeholder="Describe the issue in detail — what is wrong, how long has it been there, and how it affects students."
+                  maxlength="1000"></textarea>
+        <span class="char-count" id="descCount">0 / 1000</span>
+      </div>
+
+      <!-- Image Upload -->
+      <div class="form-group">
+        <label>Attach Photo (optional)</label>
+        <div class="file-upload-area" id="fileUploadArea">
+          <input type="file" id="image" name="image"
+                 accept=".png,.jpg,.jpeg,.gif,.webp" hidden />
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <i class="ph ph-image-square"></i>
+            <p>Click or drag &amp; drop an image here</p>
+            <span>PNG, JPG, GIF — max 5 MB</span>
+          </div>
+          <div class="upload-preview hidden" id="uploadPreview">
+            <img id="previewImg" src="#" alt="Preview" />
+            <button type="button" class="remove-img" id="removeImg">
+              <i class="ph ph-x-circle"></i> Remove
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="form-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+          <i class="ph ph-paper-plane-tilt"></i> Submit Complaint
+        </button>
+      </div>
+
+    </form>
+  </div>
+</section>
+
+<script>
+const blockBtns  = document.querySelectorAll('.block-btn');
+const blockValue = document.getElementById('blockValue');
+const blockError = document.getElementById('blockError');
+const form       = document.getElementById('complaintForm');
+
+// Block picker selection
+blockBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    blockBtns.forEach(b => b.classList.remove('block-btn--active'));
+    btn.classList.add('block-btn--active');
+    blockValue.value = btn.dataset.value;
+    blockError.style.display = 'none';  // hide error once selected
+  });
+});
+
+// Validate block is selected before submit
+form.addEventListener('submit', e => {
+  if (!blockValue.value) {
+    e.preventDefault();
+    blockError.style.display = 'block';
+    document.getElementById('blockPicker').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+});
+</script>
+{% endblock %}

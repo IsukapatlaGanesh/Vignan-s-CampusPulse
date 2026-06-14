@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant — CampusPulse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="ph ph-robot"></i> NOVA — AI Assistant</h1>
+    <p>Ask NOVA anything about CampusPulse, complaints, points, or campus issues.</p>
+  </div>
+</div>
+
+<section class="section" style="padding-bottom: 80px;">
+  <div class="container chat-container">
+
+    <!-- Sidebar: suggested prompts -->
+    <aside class="chat-sidebar">
+      <h3><i class="ph ph-sparkle"></i> Try Asking</h3>
+      <ul class="prompt-suggestions">
+        <li class="prompt-chip" data-prompt="How do I report a broken light?">
+          How do I report a broken light?
+        </li>
+        <li class="prompt-chip" data-prompt="What categories can I use?">
+          What categories can I use?
+        </li>
+        <li class="prompt-chip" data-prompt="How long until my complaint is resolved?">
+          How long until my complaint is resolved?
+        </li>
+        <li class="prompt-chip" data-prompt="Who sees my complaints?">
+          Who sees my complaints?
+        </li>
+        <li class="prompt-chip" data-prompt="How do I earn more points?">
+          How do I earn more points?
+        </li>
+        <li class="prompt-chip" data-prompt="What is the admin contact?">
+          What is the admin contact?
+        </li>
+      </ul>
+
+      <div class="chat-info-box">
+        <i class="ph ph-robot"></i>
+        <p>Powered by <strong>NOVA</strong> — AI assistant for CampusPulse, built on Gemini.</p>
+      </div>
+    </aside>
+
+    <!-- Chat window -->
+    <div class="chat-window">
+      <!-- Messages area -->
+      <div class="chat-messages" id="chatMessages">
+
+        <!-- Welcome message from bot -->
+        <div class="chat-msg chat-msg--bot">
+          <div class="chat-avatar bot-avatar"><i class="ph ph-robot"></i></div>
+          <div class="chat-bubble">
+            <p>👋 Hi! I'm <strong>NOVA</strong>, the official AI assistant for Vignan's CampusPulse! 🤖</p>
+            <p>I can help you report issues, understand how the platform works, track complaints, and more.</p>
+            <p>What would you like to know today?</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Typing indicator (hidden by default) -->
+      <div class="chat-typing hidden" id="typingIndicator">
+        <div class="chat-avatar bot-avatar"><i class="ph ph-robot"></i></div>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- Input bar -->
+      <div class="chat-input-bar">
+        <input type="text" id="chatInput" placeholder="Ask me anything about CampusPulse…"
+               maxlength="200" autocomplete="off" />
+        <button id="sendBtn" class="btn btn-primary">
+          <i class="ph ph-paper-plane-tilt"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

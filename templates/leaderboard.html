@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard — CampusPulse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="ph ph-trophy"></i> Leaderboard</h1>
+    <p>Real rankings based on student activity — complaints, resolutions, and upvotes.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container leaderboard-container">
+
+    {% if users %}
+    <!-- ── Podium Top 3 ──────────────────────────────────── -->
+    {% if users|length >= 3 %}
+    <div class="podium">
+      <div class="podium-step podium-2">
+        <div class="podium-avatar">{{ users[1].full_name[:2].upper() }}</div>
+        <div class="podium-rank">2</div>
+        <div class="podium-name">{{ users[1].full_name }}</div>
+        <div class="podium-pts">{{ users[1].points }} pts</div>
+        <div class="podium-bar pb-2"></div>
+      </div>
+      <div class="podium-step podium-1">
+        <div class="podium-crown">👑</div>
+        <div class="podium-avatar podium-avatar--gold">{{ users[0].full_name[:2].upper() }}</div>
+        <div class="podium-rank">1</div>
+        <div class="podium-name">{{ users[0].full_name }}</div>
+        <div class="podium-pts">{{ users[0].points }} pts</div>
+        <div class="podium-bar pb-1"></div>
+      </div>
+      <div class="podium-step podium-3">
+        <div class="podium-avatar">{{ users[2].full_name[:2].upper() }}</div>
+        <div class="podium-rank">3</div>
+        <div class="podium-name">{{ users[2].full_name }}</div>
+        <div class="podium-pts">{{ users[2].points }} pts</div>
+        <div class="podium-bar pb-3"></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Full Rankings ─────────────────────────────────── -->
+    <div class="ranking-list">
+      <h3>Full Rankings</h3>
+      {% for user in users %}
+      <div class="rank-row {% if loop.index <= 3 %}rank-row--top{% endif %}
+                  {% if current_student and user.id == current_student.id %}rank-row--me{% endif %}">
+        <div class="rank-position">
+          {% if loop.index == 1 %}🥇
+          {% elif loop.index == 2 %}🥈
+          {% elif loop.index == 3 %}🥉
+          {% else %}<span class="rank-num">{{ loop.index }}</span>
+          {% endif %}
+        </div>
+        <div class="rank-avatar">{{ user.full_name[:2].upper() }}</div>
+        <div class="rank-info">
+          <span class="rank-name">
+            {{ user.full_name }}
+            {% if current_student and user.id == current_student.id %}
+            <span style="font-size:11px; color:var(--accent); margin-left:6px;">(You)</span>
+            {% endif %}
+          </span>
+          <span class="rank-email">{{ user.regd_id }} &nbsp;·&nbsp; {{ user.complaint_count }} complaint(s)</span>
+        </div>
+        <div class="rank-badge-col">
+          <span class="rank-badge badge-{{ user.badge|lower }}">{{ user.badge }}</span>
+        </div>
+        <div class="rank-points">
+          <span class="rp-num">{{ user.points }}</span>
+          <span class="rp-label">pts</span>
+        </div>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"
+               style="width: {{ (user.points / users[0].points * 100)|int if users[0].points > 0 else 0 }}%">
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state-block">
+      <i class="ph ph-users-three"></i>
+      <h3>No students registered yet</h3>
+      <p>Be the first! <a href="{{ url_for('register') }}">Create an account</a> and start reporting issues.</p>
+    </div>
+    {% endif %}
+
+    <!-- How to earn points -->
+    <div class="points-guide">
+      <h3><i class="ph ph-info"></i> How to Earn Points</h3>
+      <div class="points-grid">
+        <div class="pg-card"><span class="pg-pts">+10</span><span>Submit a complaint</span></div>
+        <div class="pg-card"><span class="pg-pts">+5</span><span>Add a photo</span></div>
+        <div class="pg-card"><span class="pg-pts">+15</span><span>Complaint resolved</span></div>
+        <div class="pg-card"><span class="pg-pts">+2</span><span>Upvote an issue</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

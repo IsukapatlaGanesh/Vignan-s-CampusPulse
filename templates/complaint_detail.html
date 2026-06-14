@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% from "macros.html" import resolution_timer %}
+{% block title %}{{ complaint.title }} — CampusPulse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <a href="{{ url_for('complaints') }}" class="btn btn-ghost btn-sm" style="margin-bottom:12px;">
+      <i class="ph ph-arrow-left"></i> Back to Issues
+    </a>
+    <h1><i class="ph ph-file-text"></i> Complaint Detail</h1>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container" style="max-width:760px;">
+
+    <!-- ── Complaint Card ─────────────────────────────────── -->
+    <div class="detail-card">
+
+      {% if complaint.image_path %}
+      <div class="detail-image">
+        <img src="{{ url_for('static', filename=complaint.image_path) }}" alt="Issue photo" />
+      </div>
+      {% endif %}
+
+      <div class="detail-body">
+        <div class="card-top" style="margin-bottom:10px;">
+          <span class="category-badge cat-{{ complaint.category|lower|replace(' ','_') }}">
+            {{ complaint.category }}
+          </span>
+          <span class="status-badge status-{{ complaint.status|lower|replace(' ','-') }}">
+            {% if complaint.status == 'Pending' %}⏳
+            {% elif complaint.status == 'In Progress' %}🔄
+            {% else %}✅{% endif %}
+            {{ complaint.status }}
+          </span>
+          <span class="upvote-btn" style="cursor:default;opacity:.8;">
+            <i class="ph ph-thumbs-up"></i>
+            <span id="upvote-{{ complaint.id }}">{{ complaint.upvotes }}</span>
+          </span>
+        </div>
+
+        <h2 style="font-size:1.35rem;margin-bottom:8px;">{{ complaint.title }}</h2>
+
+        <div class="card-location" style="margin-bottom:12px;">
+          <i class="ph ph-map-pin"></i> {{ complaint.location or "Not Specified" }}
+        </div>
+
+        <p style="color:var(--text-secondary);line-height:1.7;">{{ complaint.description }}</p>
+
+        <div class="card-footer" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+          <span class="card-time"><i class="ph ph-clock"></i> {{ complaint.created_at }}</span>
+          {{ resolution_timer(complaint.created_at, complaint.status) }}
+          <span class="card-author" style="margin-left:auto;">
+            <i class="ph ph-user-circle"></i> Anonymous
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Comments Section ───────────────────────────────── -->
+    <div class="comments-section" id="comments">
+      <h3 class="comments-heading">
+        <i class="ph ph-chat-dots"></i>
+        Comments
+        <span class="comments-count">{{ comments|length }}</span>
+      </h3>
+
+      {% if comments %}
+        <div class="comments-list">
+          {% for cm in comments %}
+            {% if cm.is_admin %}
+            <!-- Admin reply — pinned at top with trusted tick -->
+            <div class="comment comment--admin">
+              <div class="comment-meta">
+                <span class="comment-author comment-author--admin">
+                  <i class="ph ph-shield-check"></i>
+                  Official Response
+                  <span class="trusted-tick" title="Verified Admin Response">✔</span>
+                </span>
+                <span class="comment-time">{{ cm.created_at }}</span>
+              </div>
+              <p class="comment-body">{{ cm.body }}</p>
+            </div>
+            {% else %}
+            <!-- Student comment — shown as Anonymous -->
+            <div class="comment comment--student">
+              <div class="comment-meta">
+                <span class="comment-author">
+                  <i class="ph ph-user"></i> Anonymous Student
+                </span>
+                <span class="comment-time">{{ cm.created_at }}</span>
+              </div>
+              <p class="comment-body">{{ cm.body }}</p>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="comments-empty">
+          <i class="ph ph-chat-slash"></i>
+          <p>No comments yet. Be the first to comment!</p>
+        </div>
+      {% endif %}
+
+      <!-- ── Post a Comment (students only) ──────────────── -->
+      {% if session.get('student_id') %}
+      <div class="comment-form-wrap">
+        <h4 class="comment-form-title">
+          <i class="ph ph-pencil"></i> Add a Comment
+          <span style="color:var(--text-muted);font-size:12px;font-weight:400;margin-left:6px;">
+            — shown as Anonymous
+          </span>
+        </h4>
+        <form method="POST" action="{{ url_for('add_comment', complaint_id=complaint.id) }}">
+          <textarea name="body" class="comment-textarea" rows="3"
+                    placeholder="Share an observation, update, or thought…"
+                    maxlength="500" required></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="ph ph-paper-plane-tilt"></i> Post Comment
+            </button>
+          </div>
+        </form>
+      </div>
+      {% else %}
+      <div class="comment-login-prompt">
+        <i class="ph ph-lock"></i>
+        <a href="{{ url_for('student_login') }}">Log in</a> to leave a comment.
+      </div>
+      {% endif %}
+
+    </div><!-- /comments-section -->
+
+  </div>
+</section>
+{% endblock %}

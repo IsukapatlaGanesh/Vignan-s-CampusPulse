@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% from "macros.html" import resolution_timer %}
+{% block title %}All Issues — CampusPulse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="ph ph-list-bullets"></i> Campus Issues</h1>
+    <p>Browse and track all reported campus complaints.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+
+    <!-- ── Filter Bar ───────────────────────────────────── -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Category</label>
+        <div class="filter-chips" id="categoryChips">
+          {% for cat in categories %}
+          <a href="{{ url_for('complaints', category=cat, status=active_status) }}"
+             class="chip {% if cat == active_category %}chip-active{% endif %}">
+            {{ cat }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Status</label>
+        <div class="filter-chips" id="statusChips">
+          {% for s in statuses %}
+          <a href="{{ url_for('complaints', category=active_category, status=s) }}"
+             class="chip chip-status
+                    {% if s == active_status %}chip-active{% endif %}
+                    {% if s == 'Pending' %}chip-pending{% endif %}
+                    {% if s == 'In Progress' %}chip-inprogress{% endif %}
+                    {% if s == 'Resolved' %}chip-resolved{% endif %}">
+            {{ s }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="filter-meta">
+        <span><strong>{{ complaints|length }}</strong> issue(s) found</span>
+        <a href="{{ url_for('submit') }}" class="btn btn-primary btn-sm">
+          <i class="ph ph-plus"></i> Report New
+        </a>
+      </div>
+    </div>
+
+    <!-- ── Complaints Grid ──────────────────────────────── -->
+    {% if complaints %}
+    <div class="cards-grid" id="complaintsGrid">
+      {% for c in complaints %}
+      <article class="complaint-card complaint-card--full" data-id="{{ c.id }}">
+
+        {% if c.image_path %}
+        <div class="card-image">
+          <img src="{{ url_for('static', filename=c.image_path) }}"
+               alt="Issue photo" loading="lazy" />
+        </div>
+        {% endif %}
+
+        <div class="card-body">
+          <div class="card-top">
+            <span class="category-badge cat-{{ c.category|lower|replace(' ','_') }}">
+              {{ c.category }}
+            </span>
+            <span class="status-badge status-{{ c.status|lower|replace(' ','-') }}">
+              {% if c.status == 'Pending' %}⏳
+              {% elif c.status == 'In Progress' %}🔄
+              {% else %}✅
+              {% endif %}
+              {{ c.status }}
+            </span>
+          </div>
+
+          <div class="card-location"><i class="ph ph-map-pin"></i> {{ c.location if c.location else "Not Specified" }}</div>
+        <h3 class="card-title">{{ c.title }}</h3>
+          <p class="card-desc">{{ c.description }}</p>
+
+          <div class="card-footer">
+            <span class="card-author">
+              <i class="ph ph-user-circle"></i> {{ c.author }}
+            </span>
+            <span class="card-time">
+              <i class="ph ph-clock"></i> {{ c.created_at }}
+            </span>
+            {{ resolution_timer(c.created_at, c.status) }}
+            <button class="upvote-btn" data-id="{{ c.id }}" title="Upvote this issue">
+              <i class="ph ph-thumbs-up"></i>
+              <span class="upvote-count" id="upvote-{{ c.id }}">{{ c.upvotes }}</span>
+            </button>
+            <a href="{{ url_for('complaint_detail', complaint_id=c.id) }}" class="btn btn-ghost btn-sm" style="margin-left:6px;" title="View details & comments">
+              <i class="ph ph-chat-dots"></i> Comments
+            </a>
+          </div>
+        </div>
+
+      </article>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Empty state -->
+    <div class="empty-state-block">
+      <i class="ph ph-smiley-meh"></i>
+      <h3>No issues found</h3>
+      <p>Try changing the filters above, or be the first to report this type of issue!</p>
+      <a href="{{ url_for('submit') }}" class="btn btn-primary">
+        <i class="ph ph-plus-circle"></i> Submit an Issue
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% macro resolution_timer(created_at, status) %}
+{#
+  Shows how long a complaint has been open (Pending/In Progress)
+  or a "Resolved" tick for resolved ones.
+  created_at format: "YYYY-MM-DD HH:MM"
+#}
+{% set now_str = now_ts %}
+<span class="res-timer res-timer--{{ status|lower|replace(' ','-') }}"
+      data-created="{{ created_at }}"
+      data-status="{{ status }}">
+  {% if status == 'Resolved' %}
+    <i class="ph ph-check-circle"></i> Resolved
+  {% else %}
+    {% set parts = created_at.split(' ') %}
+    {% set date_part = parts[0] if parts|length > 0 else created_at %}
+    {% set ymd = date_part.split('-') %}
+    {% if ymd|length == 3 %}
+      {# Calculate days pending via data attribute; JS will update live #}
+      <i class="ph ph-hourglass"></i>
+      <span class="timer-label">calculating…</span>
+    {% else %}
+      <i class="ph ph-hourglass"></i> Pending
+    {% endif %}
+  {% endif %}
+</span>
+{% endmacro %}

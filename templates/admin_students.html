@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Student Management — CampusPulse Admin{% endblock %}
+
+{% block content %}
+<div class="page-header admin-header">
+  <div class="container">
+    <div class="admin-header-inner">
+      <div>
+        <span class="admin-badge"><i class="ph ph-shield-check"></i> Admin Panel</span>
+        <h1><i class="ph ph-users"></i> Student Management</h1>
+        <p>View violations, block counts, and manage student bans.</p>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <a href="{{ url_for('admin') }}" class="btn btn-outline btn-sm">
+          <i class="ph ph-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="admin-table-wrapper">
+
+      {% set banned_list  = students | selectattr('is_banned','equalto',1) | list %}
+      {% set warned_list  = students | selectattr('is_banned','equalto',0) | selectattr('block_count','gt',0) | list %}
+      {% set clean_list   = students | selectattr('is_banned','equalto',0) | selectattr('block_count','equalto',0) | list %}
+
+      <!-- Summary pills -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+        <span class="students-pill students-pill--total">{{ students|length }} Total Students</span>
+        {% if banned_list %}
+        <span class="students-pill students-pill--ban">{{ banned_list|length }} Banned</span>
+        {% endif %}
+        {% if warned_list %}
+        <span class="students-pill students-pill--warn">{{ warned_list|length }} With Warnings</span>
+        {% endif %}
+        <span class="students-pill students-pill--ok">{{ clean_list|length }} Clean</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Reg ID</th>
+              <th>Joined</th>
+              <th>Points</th>
+              <th>Complaints</th>
+              <th>Violations</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students %}
+            <tr class="{% if s.is_banned %}student-row--banned{% elif s.block_count > 0 %}student-row--warned{% endif %}">
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="student-mini-avatar">
+                    {% set parts = s.full_name.strip().split() %}
+                    {{ (parts[0][0] + parts[-1][0])|upper if parts|length >= 2 else s.full_name[:2].upper() }}
+                  </div>
+                  <span style="font-weight:600;color:var(--text-primary);">{{ s.full_name }}</span>
+                </div>
+              </td>
+              <td style="font-size:12px;color:var(--text-muted);font-family:monospace;">{{ s.regd_id }}</td>
+              <td style="font-size:12px;color:var(--text-muted);">{{ s.joined_at }}</td>
+              <td style="color:var(--accent);font-weight:700;">{{ s.points }}</td>
+              <td style="text-align:center;">
+                <span>{{ s.total_complaints or 0 }}</span>
+                {% if s.blocked_complaints %}
+                <span style="color:#f87171;font-size:11px;"> ({{ s.blocked_complaints }} blocked)</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="violation-pips">
+                  {% for i in range(MAX_BLOCKS) %}
+                  <span class="pip {% if i < s.block_count %}pip--filled{% endif %} {% if s.is_banned %}pip--ban{% endif %}"></span>
+                  {% endfor %}
+                  <span style="font-size:12px;color:var(--text-muted);margin-left:6px;">{{ s.block_count }}/{{ MAX_BLOCKS }}</span>
+                </div>
+              </td>
+              <td>
+                {% if s.is_banned %}
+                <span class="student-status-badge student-status--banned"><i class="ph ph-prohibit"></i> Banned</span>
+                {% elif s.block_count == MAX_BLOCKS - 1 %}
+                <span class="student-status-badge student-status--critical"><i class="ph ph-warning"></i> Final Warning</span>
+                {% elif s.block_count > 0 %}
+                <span class="student-status-badge student-status--warned"><i class="ph ph-warning"></i> Warned ×{{ s.block_count }}</span>
+                {% else %}
+                <span class="student-status-badge student-status--ok"><i class="ph ph-check"></i> Clean</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if s.is_banned %}
+                <form method="POST" action="{{ url_for('unban_student', student_id=s.id) }}"
+                      onsubmit="return confirm('Unban {{ s.full_name }}? This will also clear their violation count.');">
+                  <button type="submit" class="btn-moderate btn-unblock">
+                    <i class="ph ph-arrow-counter-clockwise"></i> Unban
+                  </button>
+                </form>
+                {% else %}
+                <span style="font-size:12px;color:var(--text-muted);">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

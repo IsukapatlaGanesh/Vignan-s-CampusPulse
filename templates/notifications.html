@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Notifications — Vignan's CampusPulse{% endblock %}
+
+{% block content %}
+<section class="notif-page">
+  <div class="notif-page-inner">
+
+    <div class="notif-page-header">
+      <div class="notif-page-title">
+        <i class="ph ph-bell-ringing"></i>
+        <h1>Notifications</h1>
+      </div>
+      <span class="notif-page-count">{{ notifications|length }} total</span>
+    </div>
+
+    {% if notifications %}
+      <ul class="notif-list">
+        {% for n in notifications %}
+        <li class="notif-item {% if not n.is_read %}notif-item--unread{% endif %} notif-item--{{ n.type }}">
+          <div class="notif-item-icon">
+            {% if n.type == 'registered' %}<i class="ph ph-user-check"></i>
+            {% elif n.type == 'complaint_submitted' %}<i class="ph ph-check-circle"></i>
+            {% elif n.type == 'admin_replied' %}<i class="ph ph-chat-circle-text"></i>
+            {% elif n.type == 'resolved' %}<i class="ph ph-seal-check"></i>
+            {% elif n.type == 'warning' %}<i class="ph ph-warning"></i>
+            {% elif n.type == 'banned' %}<i class="ph ph-prohibit"></i>
+            {% elif n.type == 'unblocked' %}<i class="ph ph-arrow-counter-clockwise"></i>
+            {% elif n.type == 'unbanned' %}<i class="ph ph-user-check"></i>
+            {% else %}<i class="ph ph-bell"></i>
+            {% endif %}
+          </div>
+          <div class="notif-item-body">
+            <div class="notif-item-top">
+              <span class="notif-item-title">{{ n.title }}</span>
+              {% if not n.is_read %}<span class="notif-dot"></span>{% endif %}
+            </div>
+            <p class="notif-item-msg">{{ n.message }}</p>
+            <div class="notif-item-meta">
+              <i class="ph ph-clock"></i> {{ n.created_at }}
+              {% if n.complaint_id and n.type not in ['warning','banned'] %}
+              &nbsp;·&nbsp;
+              <a href="{{ url_for('complaint_detail', complaint_id=n.complaint_id) }}" class="notif-view-link">
+                View complaint <i class="ph ph-arrow-right"></i>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+
+    {% else %}
+      <div class="notif-empty">
+        <i class="ph ph-bell-slash"></i>
+        <h2>No notifications yet</h2>
+        <p>Account updates, complaint changes, and admin replies will appear here.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+          <i class="ph ph-house"></i> Go to Dashboard
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

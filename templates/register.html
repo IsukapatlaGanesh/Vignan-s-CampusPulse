@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Register — Vignan's CampusPulse{% endblock %}
+
+{% block content %}
+<section class="login-section">
+  <div class="login-card login-card--wide">
+
+    <div class="login-icon" style="background:rgba(56,189,248,0.1); border-color:rgba(56,189,248,0.25); color:var(--accent);">
+      <i class="ph ph-student"></i>
+    </div>
+    <h1>Create Account</h1>
+    <p class="login-subtitle">Register with your university credentials to start reporting issues and earning points.</p>
+
+    <form class="login-form" method="POST" action="{{ url_for('register') }}">
+
+      <div class="form-row-2">
+        <!-- Registration ID -->
+        <div class="form-group">
+          <label for="regd_id">Registration ID <span class="required">*</span></label>
+          <input type="text" id="regd_id" name="regd_id"
+                 placeholder="e.g. 22FA1B0001"
+                 autocomplete="username" required
+                 style="text-transform:uppercase" />
+          <span class="form-hint">Your university-issued registration number</span>
+        </div>
+
+        <!-- Full Name -->
+        <div class="form-group">
+          <label for="full_name">Full Name <span class="required">*</span></label>
+          <input type="text" id="full_name" name="full_name"
+                 placeholder="e.g. Arjun Sharma" required />
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">University Email <span class="required">*</span></label>
+        <input type="email" id="email" name="email"
+               placeholder="yourname@university.edu" required />
+      </div>
+
+      <div class="form-row-2">
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password">Password <span class="required">*</span></label>
+          <div class="password-wrap">
+            <input type="password" id="password" name="password"
+                   placeholder="Min. 6 characters" required minlength="6" />
+            <button type="button" class="toggle-pw" onclick="togglePass('password','icon1')">
+              <i class="ph ph-eye" id="icon1"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label for="confirm">Confirm Password <span class="required">*</span></label>
+          <div class="password-wrap">
+            <input type="password" id="confirm" name="confirm"
+                   placeholder="Repeat your password" required />
+            <button type="button" class="toggle-pw" onclick="togglePass('confirm','icon2')">
+              <i class="ph ph-eye" id="icon2"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password strength bar -->
+      <div class="pw-strength-wrap">
+        <div class="pw-strength-bar" id="pwStrengthBar"></div>
+      </div>
+      <span class="pw-strength-label" id="pwStrengthLabel"></span>
+
+      <button type="submit" class="btn btn-primary btn-lg login-btn">
+        <i class="ph ph-user-plus"></i> Create Account
+      </button>
+
+    </form>
+
+    <p class="auth-switch">
+      Already have an account?
+      <a href="{{ url_for('student_login') }}">Log in here</a>
+    </p>
+
+  </div>
+</section>
+
+<script>
+function togglePass(fieldId, iconId) {
+  const f = document.getElementById(fieldId);
+  const i = document.getElementById(iconId);
+  f.type  = f.type === "password" ? "text" : "password";
+  i.className = f.type === "password" ? "ph ph-eye" : "ph ph-eye-slash";
+}
+
+/* Live password strength indicator */
+document.getElementById("password").addEventListener("input", function () {
+  const val = this.value;
+  const bar = document.getElementById("pwStrengthBar");
+  const lbl = document.getElementById("pwStrengthLabel");
+  let strength = 0;
+  if (val.length >= 6)                        strength++;
+  if (val.length >= 10)                       strength++;
+  if (/[A-Z]/.test(val))                      strength++;
+  if (/[0-9]/.test(val))                      strength++;
+  if (/[^A-Za-z0-9]/.test(val))              strength++;
+  const pct    = (strength / 5) * 100;
+  const colors = ["#f87171","#fb923c","#fbbf24","#34d399","#22c55e"];
+  const labels = ["Very Weak","Weak","Fair","Strong","Very Strong"];
+  bar.style.width     = pct + "%";
+  bar.style.background = colors[strength - 1] || "#1e2d45";
+  lbl.textContent      = strength > 0 ? labels[strength - 1] : "";
+  lbl.style.color      = colors[strength - 1] || "transparent";
+});
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}My Profile — CampusPulse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="ph ph-user-circle"></i> My Profile</h1>
+    <p>Your contributions, achievements, and impact on campus.</p>
+  </div>
+</div>
+
+{% if student.is_banned %}
+<div class="violation-banner violation-banner--banned">
+  <i class="ph ph-prohibit"></i>
+  <div>
+    <strong>Your account has been permanently banned.</strong>
+    You received {{ student.block_count }} content violations. Contact admin if you believe this is a mistake.
+  </div>
+</div>
+{% elif student.block_count > 0 %}
+<div class="violation-banner violation-banner--warn{% if student.block_count == MAX_BLOCKS - 1 %} violation-banner--critical{% endif %}">
+  <i class="ph ph-warning"></i>
+  <div>
+    {% if student.block_count == MAX_BLOCKS - 1 %}
+      <strong>🚨 Final Warning!</strong> You have {{ student.block_count }}/{{ MAX_BLOCKS }} violations.
+      One more removed complaint will <strong>permanently ban</strong> your account.
+    {% else %}
+      <strong>⚠️ Content Warning:</strong> {{ student.block_count }}/{{ MAX_BLOCKS }} of your complaints have been removed for violations.
+      At {{ MAX_BLOCKS }} violations your account will be banned.
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<section class="section">
+  <div class="container profile-container">
+
+    <!-- ── Profile Sidebar ──────────────────────────────── -->
+    <aside class="profile-sidebar">
+      <div class="profile-card">
+        <div class="avatar-ring">
+          {% set parts = student.full_name.strip().split() %}
+          {% if parts|length >= 2 %}
+            <div class="avatar">{{ (parts[0][0] + parts[-1][0])|upper }}</div>
+          {% else %}
+            <div class="avatar">{{ student.full_name[:2].upper() }}</div>
+          {% endif %}
+        </div>
+        <h2 class="profile-name">{{ student.full_name }}</h2>
+        <span class="profile-email">{{ student.regd_id }}</span>
+
+        <div class="profile-badge-row">
+          <span class="profile-badge">
+            {% if student.badge == 'Legend' %}🌟
+            {% elif student.badge == 'Champion' %}🏆
+            {% elif student.badge == 'Advocate' %}🎖️
+            {% elif student.badge == 'Reporter' %}📋
+            {% else %}🌱{% endif %}
+            {{ student.badge }}
+          </span>
+        </div>
+
+        <div class="profile-stats-row">
+          <div class="profile-stat">
+            <span class="ps-num">{{ my_complaints|length }}</span>
+            <span class="ps-label">Reports</span>
+          </div>
+          <div class="profile-stat">
+            <span class="ps-num">{{ student.points }}</span>
+            <span class="ps-label">Points</span>
+          </div>
+          <div class="profile-stat">
+            <span class="ps-num">#{{ rank }}</span>
+            <span class="ps-label">Rank</span>
+          </div>
+        </div>
+
+        <div class="profile-joined">
+          <i class="ph ph-calendar-blank"></i>
+          Member since {{ student.joined_at }}
+        </div>
+      </div>
+
+      <!-- Progress to next badge -->
+      {% set next_badge = "" %}
+      {% set next_pts   = 0 %}
+      {% if student.points < 50  %}{% set next_badge = "Reporter"  %}{% set next_pts = 50  %}
+      {% elif student.points < 150 %}{% set next_badge = "Advocate"  %}{% set next_pts = 150 %}
+      {% elif student.points < 300 %}{% set next_badge = "Champion"  %}{% set next_pts = 300 %}
+      {% elif student.points < 500 %}{% set next_badge = "Legend"    %}{% set next_pts = 500 %}
+      {% endif %}
+
+      {% if next_badge %}
+      <div class="progress-card">
+        <h4><i class="ph ph-trophy"></i> Next Badge</h4>
+        <p>{{ next_pts - student.points }} more points to reach <strong>{{ next_badge }}</strong></p>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"
+               style="width: {{ [(student.points / next_pts * 100)|int, 100]|min }}%"></div>
+        </div>
+        <span class="progress-label">{{ student.points }} / {{ next_pts }} pts</span>
+      </div>
+      {% else %}
+      <div class="progress-card" style="border-color:rgba(251,191,36,0.3);">
+        <h4 style="color:var(--yellow);"><i class="ph ph-crown"></i> Max Badge!</h4>
+        <p>You've reached the highest badge — <strong>Legend</strong>. Amazing!</p>
+      </div>
+      {% endif %}
+
+      <!-- How to earn more -->
+      <div class="progress-card">
+        <h4><i class="ph ph-star"></i> Earn Points</h4>
+        <ul style="margin-top:10px; display:flex; flex-direction:column; gap:7px;">
+          <li style="font-size:13px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+            <span>Submit a complaint</span><strong style="color:var(--green)">+10</strong>
+          </li>
+          <li style="font-size:13px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+            <span>Add a photo</span><strong style="color:var(--green)">+5</strong>
+          </li>
+          <li style="font-size:13px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+            <span>Complaint resolved</span><strong style="color:var(--green)">+15</strong>
+          </li>
+          <li style="font-size:13px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+            <span>Upvote an issue</span><strong style="color:var(--green)">+2</strong>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ── Main Area ─────────────────────────────────────── -->
+    <div class="profile-main">
+
+      <!-- Achievements based on real points/complaints -->
+      <div class="achievements-section">
+        <h3><i class="ph ph-medal"></i> Achievements</h3>
+        <div class="achievement-grid">
+
+          <div class="achievement-card {{ 'unlocked' if my_complaints|length >= 1 else 'locked' }}">
+            <i class="ph ph-megaphone"></i>
+            <span>First Report</span>
+          </div>
+          <div class="achievement-card {{ 'unlocked' if my_complaints|length >= 5 else 'locked' }}">
+            <i class="ph ph-fire"></i>
+            <span>5 Reports</span>
+          </div>
+          <div class="achievement-card {{ 'unlocked' if student.points >= 50 else 'locked' }}">
+            <i class="ph ph-star"></i>
+            <span>50 Points</span>
+          </div>
+          <div class="achievement-card {{ 'unlocked' if student.points >= 150 else 'locked' }}">
+            <i class="ph ph-shield-star"></i>
+            <span>Advocate</span>
+          </div>
+          <div class="achievement-card {{ 'unlocked' if student.points >= 300 else 'locked' }}">
+            <i class="ph ph-crown"></i>
+            <span>Champion</span>
+          </div>
+          <div class="achievement-card {{ 'unlocked' if student.points >= 500 else 'locked' }}">
+            <i class="ph ph-lightning"></i>
+            <span>Legend</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- My Complaints History -->
+      <div class="my-complaints-section">
+        <h3><i class="ph ph-clipboard-text"></i> My Reported Issues
+          <span style="font-size:13px; font-weight:400; color:var(--text-muted); margin-left:8px;">
+            (only visible to you — admin sees these as Anonymous)
+          </span>
+        </h3>
+
+        {% if my_complaints %}
+        <div class="profile-complaints-list">
+          {% for c in my_complaints %}
+          <div class="profile-complaint-row {% if c.is_blocked %}pcr--blocked{% endif %}">
+            <div class="pcr-left">
+              <span class="category-badge cat-{{ c.category|lower|replace(' ','_') }}">
+                {{ c.category }}
+              </span>
+              <span class="pcr-title">{{ c.title }}</span>
+              {% if c.is_blocked %}
+              <span class="pcr-blocked-tag"><i class="ph ph-prohibit"></i> Removed by Admin</span>
+              {% endif %}
+            </div>
+            <div class="pcr-right">
+              <span class="pcr-time">{{ c.created_at }}</span>
+              {% if not c.is_blocked %}
+              <span class="status-badge status-{{ c.status|lower|replace(' ','-') }}">
+                {{ c.status }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state-block small">
+          <i class="ph ph-file-dashed"></i>
+          <p>No complaints yet. <a href="{{ url_for('submit') }}">Submit your first issue!</a></p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div><!-- end profile-main -->
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Admin Login — Vignan's CampusPulse{% endblock %}
+
+{% block content %}
+<section class="login-section">
+  <div class="login-card">
+
+    <!-- Lock icon + heading -->
+    <div class="login-icon">
+      <i class="ph ph-lock-key"></i>
+    </div>
+    <h1>Admin Login</h1>
+    <p class="login-subtitle">This area is restricted to authorised staff only.</p>
+
+    <!-- Login form -->
+    <form class="login-form" method="POST" action="{{ url_for('admin_login') }}">
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username"
+               placeholder="Enter admin username"
+               autocomplete="username" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-wrap">
+          <input type="password" id="password" name="password"
+                 placeholder="Enter password"
+                 autocomplete="current-password" required />
+          <!-- Toggle password visibility -->
+          <button type="button" class="toggle-pw" id="togglePw"
+                  title="Show/hide password">
+            <i class="ph ph-eye" id="togglePwIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg login-btn">
+        <i class="ph ph-sign-in"></i> Sign In
+      </button>
+
+    </form>
+
+    <!-- Back to site link -->
+    <a href="{{ url_for('entry') }}" class="login-back-link">
+      <i class="ph ph-arrow-left"></i> Back to Vignan's CampusPulse
+    </a>
+
+  </div>
+</section>
+
+<script>
+  /* Toggle password show/hide */
+  document.getElementById("togglePw").addEventListener("click", function () {
+    const pw   = document.getElementById("password");
+    const icon = document.getElementById("togglePwIcon");
+    if (pw.type === "password") {
+      pw.type = "text";
+      icon.className = "ph ph-eye-slash";
+    } else {
+      pw.type = "password";
+      icon.className = "ph ph-eye";
+    }
+  });
+</script>
+{% endblock %}

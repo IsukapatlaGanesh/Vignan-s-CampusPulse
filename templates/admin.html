@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+{% from "macros.html" import resolution_timer %}
+{% block title %}Admin Dashboard — CampusPulse{% endblock %}
+
+{% block content %}
+<!-- Chart.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<div class="page-header admin-header">
+  <div class="container">
+    <div class="admin-header-inner">
+      <div>
+        <span class="admin-badge"><i class="ph ph-shield-check"></i> Admin Panel</span>
+        <h1>Dashboard</h1>
+        <p>Manage campus issues. Student identities are kept private.</p>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <a href="{{ url_for('complaints') }}" class="btn btn-outline btn-sm">
+          <i class="ph ph-eye"></i> Public View
+        </a>
+        <a href="{{ url_for('admin_logout') }}" class="btn btn-sm"
+           style="background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3);">
+          <i class="ph ph-sign-out"></i> Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+
+    <!-- ── Summary Stat Cards ────────────────────────────── -->
+    <div class="admin-stats" style="grid-template-columns:repeat(5,1fr);">
+      <div class="admin-stat-card">
+        <i class="ph ph-stack"></i>
+        <div>
+          <span class="admin-stat-num">{{ counts.total }}</span>
+          <span class="admin-stat-label">Total Issues</span>
+        </div>
+      </div>
+      <div class="admin-stat-card admin-stat-card--yellow">
+        <i class="ph ph-hourglass"></i>
+        <div>
+          <span class="admin-stat-num">{{ counts.pending }}</span>
+          <span class="admin-stat-label">Pending</span>
+        </div>
+      </div>
+      <div class="admin-stat-card admin-stat-card--blue">
+        <i class="ph ph-spinner-gap"></i>
+        <div>
+          <span class="admin-stat-num">{{ counts.in_progress }}</span>
+          <span class="admin-stat-label">In Progress</span>
+        </div>
+      </div>
+      <div class="admin-stat-card admin-stat-card--green">
+        <i class="ph ph-check-circle"></i>
+        <div>
+          <span class="admin-stat-num">{{ counts.resolved }}</span>
+          <span class="admin-stat-label">Resolved</span>
+        </div>
+      </div>
+      <div class="admin-stat-card" style="border-color:rgba(167,139,250,0.3);">
+        <i class="ph ph-users" style="color:#a78bfa;"></i>
+        <div>
+          <span class="admin-stat-num" style="color:#a78bfa;">{{ counts.students }}</span>
+          <span class="admin-stat-label">Students</span>
+        </div>
+      </div>
+      <div class="admin-stat-card" style="border-color:rgba(248,113,113,0.3);">
+        <i class="ph ph-prohibit" style="color:#f87171;"></i>
+        <div>
+          <span class="admin-stat-num" style="color:#f87171;">{{ counts.blocked }}</span>
+          <span class="admin-stat-label">Blocked Posts</span>
+        </div>
+      </div>
+      <div class="admin-stat-card" style="border-color:rgba(239,68,68,0.4);">
+        <i class="ph ph-user-minus" style="color:#ef4444;"></i>
+        <div>
+          <span class="admin-stat-num" style="color:#ef4444;">{{ counts.banned }}</span>
+          <span class="admin-stat-label"><a href="{{ url_for('admin_students') }}" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Banned Accts</a></span>
+        </div>
+      </div>
+      <div class="admin-stat-card" style="border-color:rgba(251,191,36,0.3);">
+        <i class="ph ph-timer" style="color:#fbbf24;"></i>
+        <div>
+          <span class="admin-stat-num" style="color:#fbbf24;">
+            {% if counts.avg_resolution_days is not none %}
+              {{ counts.avg_resolution_days }}d
+            {% else %}
+              —
+            {% endif %}
+          </span>
+          <span class="admin-stat-label">Avg Resolution</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         CHARTS ROW 1  —  Category Pie  +  Status Doughnut
+    ═══════════════════════════════════════════════════════ -->
+    <div class="charts-grid">
+
+      <!-- Category breakdown (Pie) -->
+      <div class="chart-card">
+        <h3 class="chart-title">
+          <i class="ph ph-chart-pie"></i> Issues by Category
+        </h3>
+        <div class="chart-wrap">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Status breakdown (Doughnut) -->
+      <div class="chart-card">
+        <h3 class="chart-title">
+          <i class="ph ph-chart-donut"></i> Issues by Status
+        </h3>
+        <div class="chart-wrap">
+          <canvas id="statusChart"></canvas>
+        </div>
+        <!-- Legend below the doughnut -->
+        <div class="doughnut-legend">
+          <span class="dl-item"><span class="dl-dot" style="background:#fbbf24"></span>Pending: {{ counts.pending }}</span>
+          <span class="dl-item"><span class="dl-dot" style="background:#60a5fa"></span>In Progress: {{ counts.in_progress }}</span>
+          <span class="dl-item"><span class="dl-dot" style="background:#34d399"></span>Resolved: {{ counts.resolved }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         CHARTS ROW 2  —  Timeline (full width)
+    ═══════════════════════════════════════════════════════ -->
+    <div class="charts-grid charts-grid--single">
+
+      <!-- Complaints over time (Line) -->
+      <div class="chart-card">
+        <h3 class="chart-title">
+          <i class="ph ph-trend-up"></i> Complaints Over Last 14 Days
+        </h3>
+        <div class="chart-wrap chart-wrap--tall">
+          <canvas id="timelineChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════
+         BLOCK-WISE COMPLAINTS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="admin-table-wrapper" id="blockSection">
+      <h2><i class="ph ph-buildings" style="margin-right:6px;"></i>Block-wise Complaints</h2>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">
+        Select a block to view all complaints registered from that location.
+      </p>
+
+      <!-- Block selector buttons -->
+      <div class="block-picker" id="adminBlockPicker" style="margin-bottom:20px;">
+        {% set admin_blocks = ['A-Block','H-Block','P-Block','N-Block','U-Block','Library','Boys Hostel','Girls Hostel'] %}
+        {% for b in admin_blocks %}
+        <button type="button"
+                class="block-btn {% if active_block == b %}block-btn--active{% endif %}"
+                onclick="filterBlock('{{ b }}')">
+          <i class="ph {% if 'Hostel' in b %}ph-house{% elif b == 'Library' %}ph-books{% else %}ph-buildings{% endif %}"></i>
+          <span>{{ b }}</span>
+        </button>
+        {% endfor %}
+        {% if active_block %}
+        <button type="button" class="block-btn" onclick="filterBlock('')"
+                style="border-color:rgba(248,113,113,0.4);color:#f87171;">
+          <i class="ph ph-x-circle"></i>
+          <span>Clear</span>
+        </button>
+        {% endif %}
+      </div>
+
+      {% if active_block %}
+        <div class="admin-block-header">
+          <span class="category-badge" style="font-size:14px;padding:6px 14px;">
+            <i class="ph ph-map-pin"></i> {{ active_block }}
+          </span>
+          <span style="color:var(--text-muted);font-size:13px;margin-left:10px;">
+            {{ block_complaints|length }} complaint{{ 's' if block_complaints|length != 1 else '' }} found
+          </span>
+        </div>
+
+        {% if block_complaints %}
+        <div class="table-scroll" style="margin-top:14px;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Title &amp; Description</th>
+                <th>Category</th>
+                <th>Location Detail</th>
+                <th>Submitted</th>
+                <th>Pending For</th>
+                <th>Upvotes</th>
+                <th>Status</th>
+                <th>Update</th>
+                <th>Reply</th>
+                <th>Moderate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in block_complaints %}
+              <tr>
+                <td class="td-id">{{ c.id }}</td>
+                <td class="td-title">
+                  <a href="{{ url_for('complaint_detail', complaint_id=c.id) }}" class="td-view-link" title="View detail">
+                    <span class="title-text">{{ c.title }}</span>
+                  </a>
+                  {% if c.image_path %}<span class="has-img-badge" title="Has photo">📷</span>{% endif %}
+                  <p class="td-desc">{{ c.description[:90] }}…</p>
+                </td>
+                <td>
+                  <span class="category-badge cat-{{ c.category|lower|replace(' ','_') }}">
+                    {{ c.category }}
+                  </span>
+                </td>
+                <td style="font-size:12px;color:var(--text-muted);">{{ c.location }}</td>
+                <td class="td-time">{{ c.created_at }}</td>
+                <td>{{ resolution_timer(c.created_at, c.status) }}</td>
+                <td style="text-align:center;color:var(--accent);font-weight:700;">{{ c.upvotes }}</td>
+                <td>
+                  <span class="status-badge status-{{ c.status|lower|replace(' ','-') }}">
+                    {{ c.status }}
+                  </span>
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin') }}">
+                    <input type="hidden" name="complaint_id" value="{{ c.id }}" />
+                    <input type="hidden" name="active_block" value="{{ active_block }}" />
+                    <select name="status" class="status-select" onchange="this.form.submit()">
+                      <option value="Pending"     {% if c.status=='Pending'     %}selected{% endif %}>⏳ Pending</option>
+                      <option value="In Progress" {% if c.status=='In Progress' %}selected{% endif %}>🔄 In Progress</option>
+                      <option value="Resolved"    {% if c.status=='Resolved'    %}selected{% endif %}>✅ Resolved</option>
+                    </select>
+                  </form>
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin_reply', complaint_id=c.id) }}" class="admin-reply-form">
+                    <input type="hidden" name="active_block" value="{{ active_block }}" />
+                    <input type="text" name="body" class="reply-input" placeholder="Official reply…" maxlength="300" required />
+                    <button type="submit" class="btn btn-primary btn-sm reply-btn" title="Post official reply">
+                      <i class="ph ph-shield-check"></i>
+                    </button>
+                  </form>
+                </td>
+                <td>
+                  {% if c.is_blocked %}
+                  <form method="POST" action="{{ url_for('unblock_complaint', complaint_id=c.id) }}" style="display:inline;">
+                    <input type="hidden" name="active_block" value="{{ active_block }}" />
+                    <button type="submit" class="btn-moderate btn-unblock" title="Unblock complaint">
+                      <i class="ph ph-arrow-counter-clockwise"></i> Unblock
+                    </button>
+                  </form>
+                  {% else %}
+                  <button type="button" class="btn-moderate btn-block-trigger"
+                          onclick="openBlockModal({{ c.id }}, '{{ active_block }}')">
+                    <i class="ph ph-prohibit"></i> Block
+                  </button>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state-block" style="padding:30px;">
+          <i class="ph ph-clipboard-text"></i>
+          <h3>No complaints for {{ active_block }}</h3>
+          <p>No issues have been reported from this location yet.</p>
+        </div>
+        {% endif %}
+
+      {% else %}
+        <div class="empty-state-block" style="padding:30px;border:1px dashed var(--border);border-radius:12px;">
+          <i class="ph ph-cursor-click"></i>
+          <h3>Select a block above</h3>
+          <p>Click any block button to view its complaints.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         COMPLAINTS TABLE
+    ═══════════════════════════════════════════════════════ -->
+    <div class="admin-table-wrapper">
+      <h2>All Complaints
+        <span style="font-size:13px; color:var(--text-muted); font-weight:400; margin-left:10px;">
+          Student identities hidden — admin sees only Anonymous
+        </span>
+      </h2>
+
+      {% if complaints %}
+      <div class="table-scroll">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title &amp; Description</th>
+              <th>Category</th>
+              <th>Submitted</th>
+              <th>Pending For</th>
+              <th>Upvotes</th>
+              <th>Status</th>
+              <th>Update</th>
+              <th>Reply</th>
+              <th>Moderate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+            <tr>
+              <td class="td-id">{{ c.id }}</td>
+              <td class="td-title">
+                <a href="{{ url_for('complaint_detail', complaint_id=c.id) }}" class="td-view-link" title="View detail">
+                  <span class="title-text">{{ c.title }}</span>
+                </a>
+                {% if c.image_path %}<span class="has-img-badge" title="Has photo">📷</span>{% endif %}
+                {% if c.is_blocked %}<span class="blocked-badge">🚫 Blocked</span>{% endif %}
+                <p class="td-desc">{{ c.description[:90] }}…</p>
+                <span style="font-size:11px; color:var(--text-muted); font-style:italic;">
+                  <i class="ph ph-user-slash"></i> Anonymous
+                </span>
+              </td>
+              <td>
+                <span class="category-badge cat-{{ c.category|lower|replace(' ','_') }}">
+                  {{ c.category }}
+                </span>
+              </td>
+              <td class="td-time">{{ c.created_at }}</td>
+              <td>{{ resolution_timer(c.created_at, c.status) }}</td>
+              <td style="text-align:center; color:var(--accent); font-weight:700;">
+                {{ c.upvotes }}
+              </td>
+              <td>
+                <span class="status-badge status-{{ c.status|lower|replace(' ','-') }}">
+                  {{ c.status }}
+                </span>
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin') }}">
+                  <input type="hidden" name="complaint_id" value="{{ c.id }}" />
+                  <select name="status" class="status-select" onchange="this.form.submit()">
+                    <option value="Pending"     {% if c.status=='Pending'     %}selected{% endif %}>⏳ Pending</option>
+                    <option value="In Progress" {% if c.status=='In Progress' %}selected{% endif %}>🔄 In Progress</option>
+                    <option value="Resolved"    {% if c.status=='Resolved'    %}selected{% endif %}>✅ Resolved</option>
+                  </select>
+                </form>
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin_reply', complaint_id=c.id) }}" class="admin-reply-form">
+                  <input type="text" name="body" class="reply-input" placeholder="Official reply…" maxlength="300" required />
+                  <button type="submit" class="btn btn-primary btn-sm reply-btn" title="Post official reply">
+                    <i class="ph ph-shield-check"></i>
+                  </button>
+                </form>
+              </td>
+              <td>
+                {% if c.is_blocked %}
+                <form method="POST" action="{{ url_for('unblock_complaint', complaint_id=c.id) }}" style="display:inline;">
+                  <button type="submit" class="btn-moderate btn-unblock" title="Unblock complaint">
+                    <i class="ph ph-arrow-counter-clockwise"></i> Unblock
+                  </button>
+                </form>
+                {% else %}
+                <button type="button" class="btn-moderate btn-block-trigger"
+                        onclick="openBlockModal({{ c.id }}, '')">
+                  <i class="ph ph-prohibit"></i> Block
+                </button>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state-block">
+        <i class="ph ph-clipboard-text"></i>
+        <h3>No complaints yet</h3>
+        <p>Student submissions will appear here.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Chart.js Initialization ─────────────────────────────── -->
+<script>
+/* Pass Python data into JS safely */
+const catLabels  = {{ chart_categories | tojson }};
+const catCounts  = {{ chart_cat_counts  | tojson }};
+const statusData = {{ chart_status_counts | tojson }};
+const days       = {{ chart_days        | tojson }};
+const dayCounts  = {{ chart_day_counts  | tojson }};
+
+/* Shared chart defaults */
+Chart.defaults.color           = "#94a3b8";
+Chart.defaults.borderColor     = "#1e2d45";
+Chart.defaults.font.family     = "DM Sans, sans-serif";
+
+const COLORS = ["#60a5fa","#a78bfa","#34d399","#fbbf24","#f87171","#06b6d4","#fb923c"];
+
+/* 1. Category Pie */
+new Chart(document.getElementById("categoryChart"), {
+  type: "pie",
+  data: {
+    labels:   catLabels,
+    datasets: [{
+      data:            catCounts,
+      backgroundColor: COLORS,
+      borderColor:     "#161d2e",
+      borderWidth:     3,
+      hoverOffset:     8,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { position: "bottom", labels: { padding: 16, boxWidth: 12 } }
+    }
+  }
+});
+
+/* 2. Status Doughnut */
+new Chart(document.getElementById("statusChart"), {
+  type: "doughnut",
+  data: {
+    labels: ["Pending", "In Progress", "Resolved"],
+    datasets: [{
+      data:            statusData,
+      backgroundColor: ["#fbbf24", "#60a5fa", "#34d399"],
+      borderColor:     "#161d2e",
+      borderWidth:     3,
+      hoverOffset:     8,
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: "65%",
+    plugins: { legend: { display: false } }
+  }
+});
+
+/* 3. Timeline Line Chart */
+new Chart(document.getElementById("timelineChart"), {
+  type: "line",
+  data: {
+    labels: days,
+    datasets: [{
+      label:           "Complaints",
+      data:            dayCounts,
+      borderColor:     "#38bdf8",
+      backgroundColor: "rgba(56,189,248,0.08)",
+      fill:            true,
+      tension:         0.4,
+      pointBackgroundColor: "#38bdf8",
+      pointRadius:     5,
+      pointHoverRadius: 8,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: "#1e2d45" } },
+      y: { grid: { color: "#1e2d45" }, beginAtZero: true,
+           ticks: { stepSize: 1, precision: 0 } }
+    }
+  }
+});
+
+/* Block filter */
+function filterBlock(block) {
+  const url = block
+    ? `{{ url_for('admin') }}?block=${encodeURIComponent(block)}#blockSection`
+    : `{{ url_for('admin') }}#blockSection`;
+  window.location.href = url;
+}
+
+/* Block complaint modal */
+function openBlockModal(complaintId, activeBlock) {
+  document.getElementById("blockModal").style.display = "flex";
+  document.getElementById("blockComplaintId").value  = complaintId;
+  document.getElementById("blockActiveBlock").value  = activeBlock;
+  document.getElementById("blockForm").action = `/admin/complaint/${complaintId}/block`;
+}
+function closeBlockModal() {
+  document.getElementById("blockModal").style.display = "none";
+}
+document.getElementById("blockModal").addEventListener("click", function(e) {
+  if (e.target === this) closeBlockModal();
+});
+</script>
+
+<!-- ── Block Reason Modal ── -->
+<div id="blockModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--bg-card);border:1.5px solid rgba(248,113,113,0.4);border-radius:16px;padding:32px;width:90%;max-width:440px;">
+    <h3 style="color:#f87171;margin:0 0 8px;display:flex;align-items:center;gap:8px;">
+      <i class="ph ph-prohibit"></i> Block Complaint
+    </h3>
+    <p style="color:var(--text-secondary);font-size:14px;margin:0 0 20px;">
+      This complaint will be hidden from all students. The student will be warned and their violation count increases. At {{ MAX_BLOCKS }} violations their account is permanently banned.
+    </p>
+    <form method="POST" id="blockForm">
+      <input type="hidden" name="complaint_id" id="blockComplaintId" />
+      <input type="hidden" name="active_block" id="blockActiveBlock" />
+      <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:6px;">Reason for blocking</label>
+      <select name="reason" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-base);color:var(--text-primary);font-size:14px;margin-bottom:20px;">
+        <option value="Spam or repeated content">Spam or repeated content</option>
+        <option value="Abusive or offensive language">Abusive or offensive language</option>
+        <option value="False or misleading information">False or misleading information</option>
+        <option value="Irrelevant or off-topic content">Irrelevant or off-topic content</option>
+        <option value="Harassment or threatening content">Harassment or threatening content</option>
+      </select>
+      <div style="display:flex;gap:10px;">
+        <button type="button" onclick="closeBlockModal()"
+                style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;font-size:14px;">
+          Cancel
+        </button>
+        <button type="submit"
+                style="flex:1;padding:10px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:14px;font-weight:600;">
+          <i class="ph ph-prohibit"></i> Block Complaint
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
