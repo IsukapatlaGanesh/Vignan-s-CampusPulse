@@ -159,8 +159,27 @@ def init_pool():
     )
 
 def get_db():
-    conn = connection_pool.getconn()
-    return conn
+    global connection_pool
+
+    try:
+        conn = connection_pool.getconn()
+
+        # Check if the connection is still alive
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+
+        return conn
+
+    except Exception as e:
+        print("Reinitializing connection pool:", e)
+
+        try:
+            connection_pool.closeall()
+        except:
+            pass
+
+        init_pool()
+        return connection_pool.getconn()
 
 def release_db(conn):
     connection_pool.putconn(conn)
