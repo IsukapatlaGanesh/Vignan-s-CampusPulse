@@ -978,10 +978,11 @@ def admin_reply(complaint_id):
     ab = request.form.get("active_block", "")
     return redirect(url_for("admin") + (f"?block={ab}#blockSection" if ab else ""))
 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+init_pool()
+init_db()
+
 if __name__ == "__main__":
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    init_pool()
-    init_db()
     debug_mode = os.environ.get("FLASK_DEBUG", "True") == "True"
     print("\n✅  CampusPulse running at http://127.0.0.1:5000")
     app.run(debug=debug_mode)
